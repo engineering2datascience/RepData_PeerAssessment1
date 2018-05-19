@@ -5,23 +5,19 @@ output:
     keep_md: true
 ---
 
-```{r include = FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-options(scipen=999)
-library(dplyr)
-library(lubridate)
-library(ggplot2)
-```
+
 
 ## Loading and preprocessing the data
 The read below assumes that the working directory contains the data file called "activity.csv".
 
-```{r readdata}
+
+```r
 mydata <- read.csv("activity.csv")
 ```
 
 ## What is mean total number of steps taken per day?
-```{r stepsperday}
+
+```r
 dailysteps <- aggregate(mydata$steps, by = list(mydata$date), FUN = sum)
 colnames(dailysteps) <- c("date", "stepsum")
 hist(dailysteps$stepsum,
@@ -33,14 +29,20 @@ hist(dailysteps$stepsum,
      breaks = seq(0, 25000, 2500),
      ylim = c(0,30),
      xlim = c(0,25000))
+```
+
+![](PA1_template_files/figure-html/stepsperday-1.png)<!-- -->
+
+```r
 meansteps <- mean(dailysteps$stepsum, na.rm = TRUE)
 mediansteps <- median(dailysteps$stepsum, na.rm = TRUE)
 ```
 
-The mean number of daily steps taken is **`r format(meansteps, scientific = FALSE)`** and the median is **`r mediansteps`**.
+The mean number of daily steps taken is **10766.19** and the median is **10765**.
 
 ## What is the average daily activity pattern?
-```{r averagedaily}
+
+```r
 intervalmeans <- mydata %>%
   as_tibble() %>%
   group_by(interval) %>%
@@ -52,13 +54,19 @@ plot(intervalmeans$interval,
      ylab= "Average number of steps taken",
      col= "green",
      lwd=2)
+```
+
+![](PA1_template_files/figure-html/averagedaily-1.png)<!-- -->
+
+```r
 maxstepinterval <- intervalmeans$interval[which.max(intervalmeans$steps)]
 ```
 
-Interval `r maxstepinterval` contains the maximum average number of steps taken.
+Interval 835 contains the maximum average number of steps taken.
 
 ## Imputing missing values
-```{r missingvalues}
+
+```r
 missingvaluesum <- sum(is.na(mydata))
 #Replace all missing values with that day's average
 impdata <- mydata
@@ -78,21 +86,34 @@ hist(impdailysteps$stepsum,
      breaks = seq(0, 25000, 2500),
      ylim = c(0,30),
      xlim = c(0,25000))
+```
+
+![](PA1_template_files/figure-html/missingvalues-1.png)<!-- -->
+
+```r
 impmeansteps <- mean(impdailysteps$stepsum)
 impmediansteps <- median(impdailysteps$stepsum)
 ```
 
-The total number of missing values in the dataset is `r missingvaluesum`.
+The total number of missing values in the dataset is 2304.
 
-The mean number of daily steps taken using imputed data is **`r format(impmeansteps, scientific = FALSE)`** and the median is **`r impmediansteps`**.
+The mean number of daily steps taken using imputed data is **10766.19** and the median is **10766.1886792**.
 
 By imputing missing data, the mean number of daily steps has remained the same and the median has slightly increased. The frequency of total daily steps taken between 10000 and 12500 has also increased significantly.
 
 ## Are there differences in activity patterns between weekdays and weekends?
-```{r weekdayanalysis}
+
+```r
 impdata <- impdata %>%
   as_tibble() %>%
   mutate(daytype = ifelse(weekdays(ymd(date), abbreviate = TRUE) %in% c("Sat","Sun"), "weekend", "weekday"))
+```
+
+```
+## Warning: package 'bindrcpp' was built under R version 3.4.4
+```
+
+```r
 impdata$daytype <- as.factor(impdata$daytype)
 
 impintervalmeans <- with(impdata, aggregate(steps, by = list(daytype, interval), FUN = mean))
@@ -104,3 +125,5 @@ ggplot(impintervalmeans, aes(interval, meansteps)) +
   ylab("Number of Mean Steps per Interval") +
   xlab("5-min Interval")
 ```
+
+![](PA1_template_files/figure-html/weekdayanalysis-1.png)<!-- -->
