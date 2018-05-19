@@ -5,21 +5,64 @@ output:
     keep_md: true
 ---
 
+```{r include = FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+options(scipen=999)
+library(dplyr)
+```
 
 ## Loading and preprocessing the data
+The read below assumes that the working directory contains the data file called "activity.csv".
 
-
+```{r readdata}
+mydata <- read.csv("activity.csv")
+```
 
 ## What is mean total number of steps taken per day?
+```{r stepsperday}
+dailysteps <- aggregate(mydata$steps, by = list(mydata$date), FUN = sum)
+colnames(dailysteps) <- c("date", "stepsum")
+hist(dailysteps$stepsum,
+     main="Histogram of Total Daily Steps Taken",
+     xlab="Total Daily Steps",
+     border="blue",
+     col="green",
+     las = 1,
+     breaks = seq(0, 25000, 2500),
+     ylim = c(0,20),
+     xlim = c(0,25000))
+meansteps <- mean(dailysteps$stepsum, na.rm = TRUE)
+mediansteps <- median(dailysteps$stepsum, na.rm = TRUE)
+```
 
-
+The mean number of daily steps taken is **`r format(meansteps, scientific = FALSE)`** and the median is **`r mediansteps`**.
 
 ## What is the average daily activity pattern?
+```{r averagedaily}
+intervalmeans <- mydata %>%
+  as_tibble() %>%
+  group_by(interval) %>%
+  summarise_at(vars(steps), funs(mean(., na.rm=TRUE)))
+plot(intervalmeans$interval,
+     intervalmeans$steps,
+     type= "l",
+     xlab= "5-minute interval",
+     ylab= "Average number of steps taken",
+     col= "green",
+     lwd=2)
+maxstepinterval <- intervalmeans$interval[which.max(intervalmeans$steps)]
+```
 
-
+Interval `r maxstepinterval` contains the maximum average number of steps taken.
 
 ## Imputing missing values
+```{r missingvalues}
+missingvaluesum <- sum(is.na(mydata))
+#Replace all missing values with that day's average
+imputeddata <- mydata
+#imputeddata$steps[is.na(imputeddata$steps)] <- dailysteps$x[]
+```
 
-
+The total number of missing values in the dataset is `r missingvaluesum`.
 
 ## Are there differences in activity patterns between weekdays and weekends?
